@@ -36,8 +36,10 @@
 - architecture is loosely coupled, so web services can be designed in
   isolation
 - can interwork even if they were not explicitly designed to do so
-- supported by three classes of system: service consumers (clients),
-  service providers (servers), and service brokers (registries)
+- supported by three classes of system: 
+  - service consumers (clients)
+  - service providers (servers)
+  - service brokers (registries)
 
 ## What is a Web Service?
 
@@ -827,6 +829,115 @@ public class Calculator {
 
 - A service called “helloWorldWS” is declared
 - The service consists of three ports corresponding to the three bindings
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<definitions name="MusicDefinitions"
+ targetNamespace="urn:Music"
+ xmlns="http://schemas.xmlsoap.org/wsdl/"
+ xmlns:music="urn:Music"
+ xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema
+		 targetNamespace="urn:Music"
+		 xmlns="http://www.w3.org/2001/XMLSchema"
+		 xmlns:xsd="http://www.w3.org/2001/XMLSchema">	 
+				<complexType name="trackDetail">
+					<sequence>
+						<element name="discNumber" type="xsd:int" />
+						<element name="trackNumber" type="xsd:int" />
+						<element name="composerName" type="xsd:string" />
+						<element name="workName" type="xsd:string" />
+						<element name="titleName" type="xsd:string" />
+					</sequence>
+				</complexType>		
+				
+				<complexType name="trackDetails">
+					<sequence>
+						<element name="track" minOccurs="1" maxOccurs="unbounded" type="music:trackDetail" />
+					</sequence>
+				</complexType>
+				
+				<element name="trackDetails" type="music:trackDetails" />
+				<element name="ErrorFaultElement" type="xsd:string" />
+		</xsd:schema>
+	</types>
+
+	<message name="getComposerRequest">
+		<part name="getComposerPart" type="xsd:string" />
+	</message>
+	<message name="getByDiscRequest">
+		<part name="getByDisc" type="xsd:int" />
+	</message>
+	
+	<message name="trackDetailList">
+		<part name="trackDetailListPart" type="music:trackDetails"/>
+	</message>	
+	<message name="ErrorFault">
+		<part name="ErrorFaultPart" element="music:ErrorFaultElement"/>
+	</message>
+  
+	<portType name="musicPort">
+		<operation name="getByComposer">
+			<input message="music:getComposerRequest" />
+			<output message="music:trackDetailList" />
+			<fault name="ErrorFault" message="music:ErrorFault" />
+		</operation>
+		<operation name="getByDisc">
+			<input message="music:getByDiscRequest" />
+			<output message="music:trackDetailList" />
+			<fault name="ErrorFault" message="music:ErrorFault" />
+		</operation>
+	</portType>
+
+	<binding name="musicBinding" type="music:musicPort">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="getByComposer">
+			<soap:operation soapAction=""/>
+			<input>
+				<soap:body use="literal" namespace="urn:musicBinding"
+				encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+			</input>
+			<output>
+				<soap:body use="literal" namespace="urn:musicBinding"
+				encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+			</output>
+			<fault name="ErrorFault">
+				<soap:body use="literal" namespace="urn:musicBinding" 
+					encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />				
+			</fault>
+		</operation>
+
+		<operation name="getByDisc">
+			<soap:operation soapAction=""/>
+			<input>
+				<soap:body use="literal" namespace="urn:musicBinding"
+				encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="urn:musicBinding"
+				encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+			</output>
+			<fault name="ErrorFault">
+				<soap:body use="literal" namespace="urn:musicBinding" 
+					encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />				
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="MusicService">
+		<port name="MusicPort" binding="music:musicBinding">
+			<soap:address location="http://127.0.0.1:8080/axis2/services/MusicService"/>
+		</port>
+	</service>
+</definitions>
+```
+
+
 
 # SOAP
 
@@ -1638,3 +1749,85 @@ Solution:
   -  Client encrypts the new key with server’s public key & sends it to server
   - Client and server both know the symmetric key and encrypt subsequent communications using it
 - This is how Secure Socket Layer (SSL) works and the base for PKI
+
+# Past exam paper
+
+1. The following outline Java class computes statistical measures of sample values:
+   how many there are or their standard deviation. If the standard deviation of an
+   empty list is requested, an exception with explanatory text is thrown. This question
+   requires you to write the WSDL needed to call this class as a web service. Assume
+   that all the WSDL definitions have namespace prefix meas (measures).
+
+```java
+import uk.ac.stir.cs.Statistics;
+
+public class Measures {
+    public int count(double[] values) {
+    	return(Statistics.getCount(values));
+    }
+    public double standardDeviation(double[] values) throws StatisticsException {
+        return(Statistics.getStandardDeviation(values));
+    }
+}
+```
+
+- With reference to the class above, explain how the web service concepts of
+  service, port and operation map onto Java. Although the rest of this question
+  asks you to write the WSDL for this class, explain how Axis could be used to
+  deploy it directly as a web service.
+- Define the XML complex type values corresponding to the Java parameter
+  used above. This should use a sequence of value elements with type double.
+- Define the WSDL messages for this class: valuesMessage for inputs,
+  countMessage and deviationMessage for outputs, and errorMessage for
+  faults. Each will need one part.
+- Define the WSDL port supported by this class: measuresPort that defines two
+  operations. You do not need to define the port binding measuresBinding.
+- Define the WSDL service supported by this class: MeasuresService with the
+  corresponding port and SOAP address of your choice.
+
+1. The Simple Object Access Protocol is widely used with web services.
+
+   - Explain the sense in which you agree or disagree that SOAP is simple, deals
+     with objects, supports access, and is a communications protocol.
+
+   - Suppose a web service maintains a list of novels indexed by title. Among
+     other capabilities, the service supports an analyse operation that is given a
+     function to perform (e.g. words to count words) and a document title. For
+     this function, the service returns the word count in the document. You have
+     observed the following SOAP request and response messages:
+
+     ```xml
+     <soap:Envelope>
+         <soap:Body>
+             <function xsi:type="xsd:string">words</function>
+             <title xsi:type="xsd:string">
+             	A Tale of 2 Cities
+             </title>
+         </soap:Body>
+     </soap:Envelope>
+     
+     <soap:Envelope>
+         <soap:Body>
+     	    <count xsi:type="xsd:integer">135842</count>
+         </soap:Body>
+     </soap:Envelope>
+     ```
+
+     State what SOAP style and encoding this service uses, explaining your
+     reasoning.
+
+   - There are three other combinations of style and encoding that this service
+     could use. For the example above, state how the SOAP messages would
+     differ for these combinations. What purpose might these alternatives serve?
+
+2. Representation State Transfer is also used as an alternative way of
+   communicating with web services.
+
+   - Suppose the same web service for novels is to be accessed using REST. Give
+     a plausible interpretation of the DELETE, GET, POST and PUT operations for
+     this service. Explain what format of URL might be used with these
+     operations.
+   - For this web service, what benefits might REST offer compared to SOAP?
+     What limitations might REST have for this service? Could the same service
+     make use of both REST and SOAP?
+
